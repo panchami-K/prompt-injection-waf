@@ -1,2 +1,0 @@
-[console_scripts]
-server = prompt_injection_waf.server.app:main

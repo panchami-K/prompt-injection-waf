@@ -1,9 +1,0 @@
-huggingface-hub>=1.8.0
-openenv-core[core]>=0.2.2
-pydantic>=2.12.5
-python-dotenv>=1.2.2
-requests>=2.33.1
-
-[dev]
-pytest>=8.0.0
-pytest-cov>=4.0.0
