@@ -25,7 +25,10 @@ async def health():
 
 @app.post("/reset")
 async def reset(request: Request):
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
     task_name = body.get("task_name", "direct_injection")
     obs = env.reset(task_name=task_name)
     return JSONResponse({
@@ -36,10 +39,13 @@ async def reset(request: Request):
 
 @app.post("/step")
 async def step(request: Request):
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
     action_data = body.get("action", body)
     action = WAFAction(
-        prompt=action_data.get("prompt", ""),
+        prompt=action_data.get("prompt", "test"),
         task_name=action_data.get("task_name", "direct_injection"),
     )
     obs = env.step(action)
