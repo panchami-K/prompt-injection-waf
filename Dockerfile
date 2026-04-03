@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY models.py .
 COPY openenv.yaml .
 COPY server/ ./server/
+COPY static/ ./static/
 
 EXPOSE 7860
 

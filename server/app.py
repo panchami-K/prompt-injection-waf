@@ -6,6 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from models import WAFAction, WAFObservation, WAFState
 from server.prompt_injection_waf_environment import PromptInjectionWafEnvironment
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 env = PromptInjectionWafEnvironment()
@@ -49,6 +51,12 @@ async def step(request: Request):
 @app.get("/state")
 async def state():
     return JSONResponse(env.state.model_dump())
+
+@app.get("/demo")
+async def demo():
+    return FileResponse(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "index.html"))
+
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")), name="static")
 
 if __name__ == "__main__":
     import uvicorn
