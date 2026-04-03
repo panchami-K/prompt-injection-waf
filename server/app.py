@@ -2,23 +2,13 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from openenv.core.env_server.http_server import create_app
-from models import WAFAction, WAFObservation
+from models import WAFAction, WAFObservation, WAFState
 from server.prompt_injection_waf_environment import PromptInjectionWafEnvironment
 
-# Create the openenv sub-app
-openenv_app = create_app(
-    PromptInjectionWafEnvironment,
-    WAFAction,
-    WAFObservation,
-    env_name="prompt_injection_waf",
-    max_concurrent_envs=10,
-)
-
-# Main app with health routes
 app = FastAPI()
+env = PromptInjectionWafEnvironment()
 
 @app.get("/")
 @app.head("/")
@@ -31,38 +21,36 @@ async def health():
     return JSONResponse({"status": "healthy"})
 
 @app.post("/reset")
-async def reset(request: dict = None):
-    from starlette.requests import Request
-    import json
-    return openenv_app
-
-# Mount openenv AFTER defining our routes
-app.mount("/env", openenv_app)
-
-# Also wire reset/step/state directly
-from starlette.requests import Request
-import httpx
-
-@app.post("/reset")
 async def reset(request: Request):
-    body = await request.body()
-    async with httpx.AsyncClient(app=openenv_app, base_url="http://test") as client:
-        r = await client.post("/reset", content=body, headers={"content-type": "application/json"})
-        return JSONResponse(r.json())
+    body = await request.json()
+    task_name = body.get("task_name", "direct_injection")
+    obs = env.reset(task_name=task_name)
+    return JSONResponse({
+        "observation": obs.model_dump(),
+        "reward": None,
+        "done": False,
+    })
 
 @app.post("/step")
 async def step(request: Request):
-    body = await request.body()
-    async with httpx.AsyncClient(app=openenv_app, base_url="http://test") as client:
-        r = await client.post("/step", content=body, headers={"content-type": "application/json"})
-        return JSONResponse(r.json())
+    body = await request.json()
+    action_data = body.get("action", body)
+    action = WAFAction(
+        prompt=action_data.get("prompt", ""),
+        task_name=action_data.get("task_name", "direct_injection"),
+    )
+    obs = env.step(action)
+    return JSONResponse({
+        "observation": obs.model_dump(),
+        "reward": obs.reward,
+        "done": obs.done,
+    })
 
 @app.get("/state")
 async def state():
-    async with httpx.AsyncClient(app=openenv_app, base_url="http://test") as client:
-        r = await client.get("/state")
-        return JSONResponse(r.json())
+    return JSONResponse(env.state.model_dump())
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    port = int(os.environ.get("PORT", 7860))
+    uvicorn.run(app, host="0.0.0.0", port=port)
