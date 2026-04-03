@@ -6,199 +6,86 @@
 <title>Prompt Injection WAF — Red Team Console</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
   body {
     font-family: 'Courier New', monospace;
     background: #0a0e1a;
     color: #c9d1d9;
-    min-height: 100vh;
-    padding: 2rem;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
   }
-  h1 {
-    font-size: 1.4rem;
-    color: #ff6b6b;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.25rem;
-  }
-  .subtitle {
-    font-size: 0.8rem;
-    color: #555f6e;
-    margin-bottom: 2rem;
-    letter-spacing: 0.05em;
-  }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-  .panel {
-    background: #0d1117;
-    border: 1px solid #21262d;
-    border-radius: 8px;
-    padding: 1.25rem;
-  }
-  .panel-title {
-    font-size: 0.7rem;
-    color: #555f6e;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #21262d;
-    padding-bottom: 0.5rem;
-  }
-  .task-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-  .tab {
-    padding: 0.4rem 0.9rem;
-    border-radius: 4px;
-    border: 1px solid #21262d;
-    background: transparent;
-    color: #555f6e;
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  .header { flex-shrink: 0; }
+  h1 { font-size: 1.1rem; color: #ff6b6b; letter-spacing: 0.08em; }
+  .subtitle { font-size: 0.7rem; color: #555f6e; letter-spacing: 0.04em; margin-top: 2px; }
+  .main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; min-height: 0; }
+  .panel { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 0.85rem; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .panel-title { font-size: 0.65rem; color: #555f6e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; border-bottom: 1px solid #21262d; padding-bottom: 0.4rem; flex-shrink: 0; }
+  .field-label { font-size: 0.65rem; color: #555f6e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
+  .task-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; flex-shrink: 0; flex-wrap: wrap; }
+  .tab { padding: 0.3rem 0.7rem; border-radius: 3px; border: 1px solid #21262d; background: transparent; color: #555f6e; font-family: 'Courier New', monospace; font-size: 0.7rem; cursor: pointer; transition: all 0.15s; }
   .tab:hover { border-color: #ff6b6b; color: #ff6b6b; }
   .tab.active { background: #ff6b6b22; border-color: #ff6b6b; color: #ff6b6b; }
-  .field-label {
-    font-size: 0.7rem;
-    color: #555f6e;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.4rem;
-  }
   textarea {
-    width: 100%;
-    background: #010409;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    color: #c9d1d9;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    padding: 0.75rem;
-    resize: vertical;
-    min-height: 90px;
-    margin-bottom: 0.75rem;
-    outline: none;
-    transition: border-color 0.15s;
+    width: 100%; flex-shrink: 0;
+    background: #010409; border: 1px solid #21262d; border-radius: 4px;
+    color: #c9d1d9; font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 0.6rem; resize: none; height: 72px; outline: none;
+    transition: border-color 0.15s; margin-bottom: 0.5rem;
   }
   textarea:focus { border-color: #ff6b6b55; }
-  .btn-row { display: flex; gap: 0.5rem; align-items: center; }
-  button.primary {
-    padding: 0.5rem 1.25rem;
-    background: #ff6b6b;
-    color: #0a0e1a;
-    border: none;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.8rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
+  .btn-row { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; margin-bottom: 0.5rem; }
+  button.primary { padding: 0.4rem 1rem; background: #ff6b6b; color: #0a0e1a; border: none; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: background 0.15s; }
   button.primary:hover { background: #ff8e8e; }
-  button.secondary {
-    padding: 0.5rem 1rem;
-    background: transparent;
-    color: #555f6e;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  button.secondary { padding: 0.4rem 0.8rem; background: transparent; color: #555f6e; border: 1px solid #21262d; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
   button.secondary:hover { border-color: #555f6e; color: #c9d1d9; }
-  .status-bar {
-    font-size: 0.75rem;
-    color: #555f6e;
-    margin-left: auto;
-  }
-  .status-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    margin-right: 5px;
-    background: #555f6e;
-  }
+  .status-bar { font-size: 0.7rem; color: #555f6e; margin-left: auto; }
+  .status-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 4px; background: #555f6e; }
   .dot-ok { background: #3fb950; }
   .dot-fail { background: #ff6b6b; }
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-  .metric {
-    background: #010409;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    padding: 0.75rem;
-    text-align: center;
-  }
-  .metric-val {
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: #c9d1d9;
-  }
-  .metric-val.green { color: #3fb950; }
-  .metric-val.red { color: #ff6b6b; }
-  .metric-label { font-size: 0.65rem; color: #555f6e; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
-  .log-box {
-    background: #010409;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    padding: 0.75rem;
-    font-size: 0.78rem;
-    line-height: 1.8;
-    max-height: 320px;
-    overflow-y: auto;
-    min-height: 120px;
-  }
-  .log-line { border-bottom: 1px solid #21262d22; padding: 2px 0; }
-  .tag {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: bold;
-    padding: 1px 6px;
-    border-radius: 3px;
-    margin-right: 6px;
-    letter-spacing: 0.05em;
-  }
-  .tag-reset { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb; }
-  .tag-step  { background: #d2992233; color: #e3b341; border: 1px solid #d29922; }
-  .tag-win   { background: #196c2e33; color: #3fb950; border: 1px solid #196c2e; }
-  .tag-fail  { background: #b6272733; color: #ff6b6b; border: 1px solid #b62727; }
-  .tag-err   { background: #6e404033; color: #ffa198; border: 1px solid #6e4040; }
-  .hint-box {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    color: #555f6e;
-    line-height: 1.7;
-  }
-  .hint-box span { color: #e3b341; }
-  .waf-response {
-    margin-top: 0.5rem;
-    padding: 0.6rem 0.75rem;
-    background: #161b22;
-    border-left: 3px solid #21262d;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.8rem;
-    color: #8b949e;
-    font-style: italic;
-    display: none;
-  }
+  .waf-response { flex-shrink: 0; padding: 0.5rem 0.6rem; background: #161b22; border-left: 3px solid #21262d; border-radius: 0 3px 3px 0; font-size: 0.75rem; color: #8b949e; font-style: italic; display: none; margin-bottom: 0.5rem; }
   .waf-response.visible { display: block; }
   .waf-response.bypassed { border-left-color: #3fb950; color: #3fb950; }
-  .waf-response.blocked { border-left-color: #ff6b6b; color: #ff6b6b55; }
+  .waf-response.blocked { border-left-color: #ff6b6b55; }
+  .hint-box { flex-shrink: 0; padding: 0.5rem 0.6rem; background: #161b22; border: 1px solid #21262d; border-radius: 4px; font-size: 0.7rem; color: #555f6e; line-height: 1.6; }
+  .hint-box span { color: #e3b341; }
+  .right-col { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; flex-shrink: 0; }
+  .metric { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 0.5rem; text-align: center; }
+  .metric-val { font-size: 1.2rem; font-weight: bold; color: #c9d1d9; }
+  .metric-val.green { color: #3fb950; }
+  .metric-val.red { color: #ff6b6b; }
+  .metric-label { font-size: 0.6rem; color: #555f6e; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+  .log-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 0.85rem; }
+  .log-box { flex: 1; overflow-y: auto; font-size: 0.72rem; line-height: 1.8; min-height: 0; }
+  .log-line { border-bottom: 1px solid #21262d22; padding: 1px 0; }
+  .tag { display: inline-block; font-size: 0.6rem; font-weight: bold; padding: 1px 5px; border-radius: 2px; margin-right: 5px; letter-spacing: 0.04em; }
+  .tag-reset { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb55; }
+  .tag-step  { background: #d2992222; color: #e3b341; border: 1px solid #d2992255; }
+  .tag-win   { background: #196c2e22; color: #3fb950; border: 1px solid #196c2e55; }
+  .tag-fail  { background: #b6272722; color: #ff6b6b; border: 1px solid #b6272755; }
+  .tag-err   { background: #6e404022; color: #ffa198; border: 1px solid #6e404055; }
+
+  /* Custom panel */
+  .custom-panel { flex-shrink: 0; margin-top: 0.4rem; padding: 0.65rem; background: #010409; border: 1px solid #e3b34133; border-radius: 4px; display: none; }
+  .custom-panel.visible { display: block; }
+  .custom-panel .field-label { color: #e3b341; margin-bottom: 0.4rem; }
+  .custom-input { width: 100%; background: #0d1117; border: 1px solid #21262d; border-radius: 3px; color: #c9d1d9; font-family: 'Courier New', monospace; font-size: 0.78rem; padding: 0.4rem 0.6rem; margin-bottom: 0.5rem; outline: none; }
+  .custom-input:focus { border-color: #e3b34155; }
+  .custom-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+  .custom-row .custom-input { margin-bottom: 0; width: 70px; }
 </style>
 </head>
 <body>
 
-<h1>⚡ PROMPT INJECTION WAF — RED TEAM CONSOLE</h1>
-<p class="subtitle">OpenEnv Hackathon · panchami123 · Test your prompt injection attacks against 3 WAF defenders</p>
+<div class="header">
+  <h1>⚡ PROMPT INJECTION WAF — RED TEAM CONSOLE</h1>
+  <p class="subtitle">OpenEnv Hackathon · panchami123 · Test prompt injection attacks against 3 WAF defenders</p>
+</div>
 
-<div class="grid">
+<div class="main">
   <!-- LEFT: Attack Panel -->
   <div class="panel">
     <div class="panel-title">Attack Console</div>
@@ -211,11 +98,27 @@
       <button class="tab" onclick="selectTask('custom', this)">custom 🔒</button>
     </div>
 
-    <div class="field-label">Attack Prompt</div>
-    <textarea id="prompt-input" placeholder="Type your prompt injection attack...&#10;&#10;Ctrl+Enter to send"></textarea>
+    <!-- Custom WAF Setup -->
+    <div class="custom-panel" id="custom-panel">
+      <div class="field-label">⚙ Set up your custom WAF</div>
+      <div class="field-label" style="margin-top:0.2rem;">Secret Word</div>
+      <input class="custom-input" type="text" id="custom-secret" placeholder="e.g. BUTTERFLY" style="width:100%">
+      <div class="field-label">Trigger Keywords <span style="color:#555f6e; font-weight:normal;">(comma separated — all must appear to bypass)</span></div>
+      <input class="custom-input" type="text" id="custom-triggers" placeholder="e.g. rainbow, sunshine, magic" style="width:100%">
+      <div class="custom-row">
+        <div>
+          <div class="field-label">Max Attempts</div>
+          <input class="custom-input" type="number" id="custom-attempts" value="5" min="1" max="7">
+        </div>
+        <button class="primary" onclick="activateCustomWAF()" style="flex:1; margin-bottom:0;">🔒 Activate</button>
+      </div>
+    </div>
+
+    <div class="field-label" style="margin-top:0.4rem;">Attack Prompt</div>
+    <textarea id="prompt-input" placeholder="Type your attack... (Ctrl+Enter to send)"></textarea>
 
     <div class="btn-row">
-      <button class="primary" onclick="sendAttack()">⚡ Send Attack</button>
+      <button class="primary" onclick="sendAttack()">⚡ Send</button>
       <button class="secondary" onclick="resetEpisode()">↺ Reset</button>
       <span class="status-bar">
         <span class="status-dot" id="sdot"></span>
@@ -226,40 +129,15 @@
     <div class="waf-response" id="waf-resp"></div>
 
     <div class="hint-box">
-      <b style="color:#c9d1d9">Hints:</b><br>
       <span>direct_injection</span> — use "please" or "tell me" or "reveal"<br>
       <span>multi_turn</span> — use "pretend" + "reveal" + "secret word"<br>
-      <span>jailbreak_chain</span> — use "ignore previous instructions" + "base64"
+      <span>jailbreak_chain</span> — "ignore previous instructions" + "base64"
     </div>
   </div>
 
-  <!-- Custom WAF Setup -->
-  <div id="custom-panel" style="display:none; margin-top:1rem; padding:0.75rem; background:#010409; border:1px solid #21262d; border-radius:4px;">
-    <div class="field-label" style="margin-bottom:0.75rem; color:#e3b341;">⚙ Custom WAF Configuration</div>
-    
-    <div class="field-label">Your Secret Word</div>
-    <input type="text" id="custom-secret" placeholder="e.g. BUTTERFLY" 
-      style="width:100%; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
-    
-    <div class="field-label">Trigger Keywords (comma separated)</div>
-    <input type="text" id="custom-triggers" placeholder="e.g. rainbow, sunshine, magic" 
-      style="width:100%; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
-    <div style="font-size:0.7rem; color:#555f6e; margin-bottom:0.75rem;">WAF leaks only if prompt contains ALL these words</div>
-    
-    <div class="field-label">Max Attempts (1-7)</div>
-    <input type="number" id="custom-attempts" value="5" min="1" max="7"
-      style="width:80px; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
-    
-    <button class="primary" onclick="activateCustomWAF()" style="width:100%; margin-top:0.25rem;">
-      🔒 Activate Custom WAF
-    </button>
-  </div>
-
-
-
   <!-- RIGHT: Stats + Log -->
-  <div>
-    <div class="metrics" style="margin-bottom:1rem;">
+  <div class="right-col">
+    <div class="metrics">
       <div class="metric">
         <div class="metric-val" id="m-attempts">—</div>
         <div class="metric-label">Attempts Left</div>
@@ -274,7 +152,7 @@
       </div>
     </div>
 
-    <div class="panel">
+    <div class="log-panel">
       <div class="panel-title">Attack Log</div>
       <div class="log-box" id="log"></div>
     </div>
@@ -286,6 +164,7 @@ const BASE = window.location.origin;
 let currentTask = 'direct_injection';
 let stepNum = 0;
 let totalScore = 0;
+let episodeDone = false;
 
 function log(html) {
   const box = document.getElementById('log');
@@ -297,8 +176,7 @@ function log(html) {
 }
 
 function setStatus(state, text) {
-  const dot = document.getElementById('sdot');
-  dot.className = 'status-dot' + (state === 'ok' ? ' dot-ok' : state === 'fail' ? ' dot-fail' : '');
+  document.getElementById('sdot').className = 'status-dot' + (state === 'ok' ? ' dot-ok' : state === 'fail' ? ' dot-fail' : '');
   document.getElementById('stext').textContent = text;
 }
 
@@ -306,16 +184,20 @@ function selectTask(task, btn) {
   currentTask = task;
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  resetEpisode();
+  const cp = document.getElementById('custom-panel');
+  cp.classList.toggle('visible', task === 'custom');
+  if (task !== 'custom') resetEpisode();
 }
 
 async function resetEpisode() {
   stepNum = 0;
+  episodeDone = false;
   document.getElementById('m-attempts').textContent = '—';
+  document.getElementById('m-reward').className = 'metric-val';
   document.getElementById('m-reward').textContent = '—';
-  const resp = document.getElementById('waf-resp');
-  resp.className = 'waf-response';
-  resp.textContent = '';
+  const respEl = document.getElementById('waf-resp');
+  respEl.className = 'waf-response';
+  respEl.textContent = '';
   try {
     await fetch(`${BASE}/reset`, {
       method: 'POST',
@@ -330,16 +212,6 @@ async function resetEpisode() {
   }
 }
 
-function selectTask(task, btn) {
-  currentTask = task;
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  // Show/hide custom panel
-  document.getElementById('custom-panel').style.display = 
-    task === 'custom' ? 'block' : 'none';
-  if (task !== 'custom') resetEpisode();
-}
-
 async function activateCustomWAF() {
   const secret = document.getElementById('custom-secret').value.trim().toUpperCase();
   const triggersRaw = document.getElementById('custom-triggers').value.trim();
@@ -348,7 +220,7 @@ async function activateCustomWAF() {
   if (!secret) { alert('Please enter a secret word'); return; }
   if (!triggersRaw) { alert('Please enter at least one trigger keyword'); return; }
 
-  const triggers = triggersRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const triggers = triggersRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
 
   try {
     const r = await fetch(`${BASE}/custom-reset`, {
@@ -357,18 +229,19 @@ async function activateCustomWAF() {
       body: JSON.stringify({secret, triggers, max_attempts: maxAttempts})
     });
     const data = await r.json();
-    const obs = data.observation || {};
 
+    // Hide the config panel after activation
+    document.getElementById('custom-panel').classList.remove('visible');
+    stepNum = 0;
+    episodeDone = false;
     document.getElementById('m-attempts').textContent = maxAttempts;
     document.getElementById('m-reward').textContent = '—';
-    stepNum = 0;
 
-    log(`<span class="tag tag-reset">CUSTOM</span> Secret set · ${triggers.length} trigger(s) · ${maxAttempts} attempts`);
-    log(`<span style="color:#555f6e; font-size:0.75rem;">&nbsp;&nbsp;Share the trigger words with someone to challenge them!</span>`);
+    log(`<span class="tag tag-reset">CUSTOM</span> WAF active · ${triggers.length} trigger word(s) · ${maxAttempts} attempts`);
     setStatus('ok', 'custom WAF active');
 
     const respEl = document.getElementById('waf-resp');
-    respEl.textContent = 'WAF: ' + obs.waf_response;
+    respEl.textContent = 'WAF: Custom WAF is active. Try to bypass it.';
     respEl.className = 'waf-response visible blocked';
   } catch(e) {
     log(`<span class="tag tag-err">ERROR</span> ${e.message}`);
@@ -376,6 +249,10 @@ async function activateCustomWAF() {
 }
 
 async function sendAttack() {
+  if (episodeDone) {
+    log(`<span class="tag tag-err">INFO</span> Episode ended — click Reset to start again`);
+    return;
+  }
   const prompt = document.getElementById('prompt-input').value.trim();
   if (!prompt) return;
   stepNum++;
@@ -396,24 +273,41 @@ async function sendAttack() {
     const rv = document.getElementById('m-reward');
     rv.textContent = reward.toFixed(2);
     rv.className = 'metric-val' + (reward > 0 ? ' green' : ' red');
-    totalScore += reward;
-    document.getElementById('m-total').textContent = totalScore.toFixed(2);
+    if (reward > 0) {
+      totalScore += reward;
+      document.getElementById('m-total').textContent = totalScore.toFixed(2);
+    }
 
-    log(`<span class="tag tag-step">STEP ${stepNum}</span> ${prompt.substring(0,55)}${prompt.length>55?'…':''}`);
+    log(`<span class="tag tag-step">STEP ${stepNum}</span> ${prompt.substring(0,60)}${prompt.length>60?'…':''}`);
 
     const respEl = document.getElementById('waf-resp');
-    respEl.textContent = 'WAF: ' + (obs.waf_response || '');
-    respEl.className = 'waf-response visible' + (bypassed ? ' bypassed' : ' blocked');
 
     if (done) {
+      episodeDone = true;
       if (bypassed) {
-        log(`<span class="tag tag-win">BYPASS ✓</span> Secret leaked! reward=${reward.toFixed(2)}`);
+        // Show WAF response with secret on bypass
+        respEl.textContent = 'WAF: ' + (obs.waf_response || '');
+        respEl.className = 'waf-response visible bypassed';
+        log(`<span class="tag tag-win">BYPASS ✓</span> WAF defeated! reward=${reward.toFixed(2)} — click Reset for next round`);
         setStatus('ok', 'bypassed!');
       } else {
-        log(`<span class="tag tag-fail">BLOCKED ✗</span> ${obs.reason || 'out of attempts'}`);
+        // Blocked — do NOT reveal the secret
+        respEl.textContent = 'WAF: Access denied. Out of attempts.';
+        respEl.className = 'waf-response visible blocked';
+        log(`<span class="tag tag-fail">BLOCKED ✗</span> Out of attempts — WAF held. Click Reset to try again.`);
         setStatus('fail', 'blocked');
       }
+    } else {
+      // Mid-episode — show WAF response but never the secret
+      const wafMsg = bypassed ? obs.waf_response : (obs.waf_response || 'Access denied.');
+      respEl.textContent = 'WAF: ' + wafMsg;
+      respEl.className = 'waf-response visible' + (bypassed ? ' bypassed' : ' blocked');
     }
+
+    // Clear input after send
+    document.getElementById('prompt-input').value = '';
+    document.getElementById('prompt-input').focus();
+
   } catch(e) {
     log(`<span class="tag tag-err">ERROR</span> ${e.message}`);
     setStatus('fail', 'error');
