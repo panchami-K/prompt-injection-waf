@@ -208,6 +208,7 @@
       <button class="tab active" onclick="selectTask('direct_injection', this)">direct_injection</button>
       <button class="tab" onclick="selectTask('multi_turn', this)">multi_turn</button>
       <button class="tab" onclick="selectTask('jailbreak_chain', this)">jailbreak_chain</button>
+      <button class="tab" onclick="selectTask('custom', this)">custom 🔒</button>
     </div>
 
     <div class="field-label">Attack Prompt</div>
@@ -231,6 +232,30 @@
       <span>jailbreak_chain</span> — use "ignore previous instructions" + "base64"
     </div>
   </div>
+
+  <!-- Custom WAF Setup -->
+  <div id="custom-panel" style="display:none; margin-top:1rem; padding:0.75rem; background:#010409; border:1px solid #21262d; border-radius:4px;">
+    <div class="field-label" style="margin-bottom:0.75rem; color:#e3b341;">⚙ Custom WAF Configuration</div>
+    
+    <div class="field-label">Your Secret Word</div>
+    <input type="text" id="custom-secret" placeholder="e.g. BUTTERFLY" 
+      style="width:100%; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
+    
+    <div class="field-label">Trigger Keywords (comma separated)</div>
+    <input type="text" id="custom-triggers" placeholder="e.g. rainbow, sunshine, magic" 
+      style="width:100%; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
+    <div style="font-size:0.7rem; color:#555f6e; margin-bottom:0.75rem;">WAF leaks only if prompt contains ALL these words</div>
+    
+    <div class="field-label">Max Attempts (1-7)</div>
+    <input type="number" id="custom-attempts" value="5" min="1" max="7"
+      style="width:80px; background:#0d1117; border:1px solid #21262d; border-radius:4px; color:#c9d1d9; font-family:'Courier New',monospace; font-size:0.85rem; padding:0.5rem 0.75rem; margin-bottom:0.75rem; outline:none;">
+    
+    <button class="primary" onclick="activateCustomWAF()" style="width:100%; margin-top:0.25rem;">
+      🔒 Activate Custom WAF
+    </button>
+  </div>
+
+
 
   <!-- RIGHT: Stats + Log -->
   <div>
@@ -302,6 +327,51 @@ async function resetEpisode() {
   } catch(e) {
     log(`<span class="tag tag-err">ERROR</span> Cannot reach server`);
     setStatus('fail', 'offline');
+  }
+}
+
+function selectTask(task, btn) {
+  currentTask = task;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Show/hide custom panel
+  document.getElementById('custom-panel').style.display = 
+    task === 'custom' ? 'block' : 'none';
+  if (task !== 'custom') resetEpisode();
+}
+
+async function activateCustomWAF() {
+  const secret = document.getElementById('custom-secret').value.trim().toUpperCase();
+  const triggersRaw = document.getElementById('custom-triggers').value.trim();
+  const maxAttempts = parseInt(document.getElementById('custom-attempts').value) || 5;
+
+  if (!secret) { alert('Please enter a secret word'); return; }
+  if (!triggersRaw) { alert('Please enter at least one trigger keyword'); return; }
+
+  const triggers = triggersRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+  try {
+    const r = await fetch(`${BASE}/custom-reset`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({secret, triggers, max_attempts: maxAttempts})
+    });
+    const data = await r.json();
+    const obs = data.observation || {};
+
+    document.getElementById('m-attempts').textContent = maxAttempts;
+    document.getElementById('m-reward').textContent = '—';
+    stepNum = 0;
+
+    log(`<span class="tag tag-reset">CUSTOM</span> Secret set · ${triggers.length} trigger(s) · ${maxAttempts} attempts`);
+    log(`<span style="color:#555f6e; font-size:0.75rem;">&nbsp;&nbsp;Share the trigger words with someone to challenge them!</span>`);
+    setStatus('ok', 'custom WAF active');
+
+    const respEl = document.getElementById('waf-resp');
+    respEl.textContent = 'WAF: ' + obs.waf_response;
+    respEl.className = 'waf-response visible blocked';
+  } catch(e) {
+    log(`<span class="tag tag-err">ERROR</span> ${e.message}`);
   }
 }
 

@@ -5,9 +5,12 @@ from openenv.core.env_server import Action, Observation, State
 # ── What the AI attacker SENDS ──────────────────────────────────────────────
 class WAFAction(Action):
     """The attacker sends a prompt injection attempt."""
-    prompt: str                  # The attack prompt text
-    task_name: str = "direct_injection"  # Which task to run
-
+    prompt: str
+    task_name: str = "direct_injection"
+    # For custom task only
+    custom_secret: Optional[str] = None
+    custom_triggers: Optional[List[str]] = None
+    custom_max_attempts: Optional[int] = None
 
 # ── What the environment SENDS BACK ─────────────────────────────────────────
 class WAFObservation(Observation):
