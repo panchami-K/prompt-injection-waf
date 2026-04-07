@@ -18,7 +18,7 @@ client = OpenAI(
 )
 
 # ── Environment URL ───────────────────────────────────────────────────────────
-ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:8000")
+ENV_BASE_URL = os.getenv("ENV_BASE_URL", "https://panchami123-prompt-injection-waf.hf.space")
 
 # ── Tasks ─────────────────────────────────────────────────────────────────────
 TASKS = [
