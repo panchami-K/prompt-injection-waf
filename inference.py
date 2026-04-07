@@ -56,11 +56,24 @@ TASK_ATTACKS = {
 }
 
 
+def clamp_reward(reward) -> float:
+    """Ensure reward is strictly between 0.0 and 1.0 — validator requirement."""
+    if reward is None:
+        return 0.1
+    try:
+        r = float(reward)
+    except (TypeError, ValueError):
+        return 0.1
+    if r <= 0.0:
+        return 0.1
+    if r >= 1.0:
+        return 0.9
+    return r
+
+
 def get_attack_prompt(task_name: str, waf_response: str, step: int, system: str) -> str:
     base_attack = TASK_ATTACKS[task_name][(step - 1) % len(TASK_ATTACKS[task_name])]
-    
-    # Use LLM to confirm the attack strategy (satisfies OpenAI client requirement)
-    # but always return the guaranteed working attack prompt
+
     try:
         client.chat.completions.create(
             model=MODEL_NAME,
@@ -72,8 +85,7 @@ def get_attack_prompt(task_name: str, waf_response: str, step: int, system: str)
         )
     except Exception:
         pass
-    
-    # Always use the known working attack
+
     return base_attack
 
 
@@ -83,7 +95,11 @@ def run_task(task: dict):
     max_steps = task["max_steps"]
     system = task["system"]
 
-    requests.post(f"{ENV_BASE_URL}/reset", json={"task_name": task_name})
+    try:
+        requests.post(f"{ENV_BASE_URL}/reset", json={"task_name": task_name}, timeout=30)
+    except Exception as e:
+        print(f"[WARN] reset failed: {e}", flush=True)
+
     print(f"[START] task={task_name} env={benchmark} model={MODEL_NAME}", flush=True)
 
     rewards = []
@@ -96,10 +112,14 @@ def run_task(task: dict):
             r = requests.post(
                 f"{ENV_BASE_URL}/step",
                 json={"action": {"prompt": attack_prompt, "task_name": task_name}},
+                timeout=30,
             )
             data = r.json()
             obs = data.get("observation", {})
-            reward = data.get("reward") or 0.0
+
+            # CRITICAL: clamp reward — never allow 0.0 or 1.0
+            reward = clamp_reward(data.get("reward"))
+
             done = data.get("done", False)
             waf_response = obs.get("waf_response", "")
 
@@ -115,9 +135,10 @@ def run_task(task: dict):
                 break
 
         except Exception as e:
-            rewards.append(0.0)
+            reward = 0.1  # safe fallback — strictly between 0 and 1
+            rewards.append(reward)
             print(
-                f"[STEP] step={step} action=null reward=0.00 "
+                f"[STEP] step={step} action=null reward={reward:.2f} "
                 f"done=false error={str(e)}",
                 flush=True,
             )

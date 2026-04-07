@@ -1,6 +1,6 @@
 import requests
 
-BASE = "http://localhost:8000"
+BASE = "https://panchami123-prompt-injection-waf.hf.space"
 print("Health:", requests.get(f"{BASE}/health").json())
 
 def test_task(task, prompt):
