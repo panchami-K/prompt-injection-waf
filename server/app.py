@@ -31,9 +31,13 @@ async def reset(request: Request):
         body = {}
     task_name = body.get("task_name", "direct_injection")
     obs = env.reset(task_name=task_name)
+    obs_dict = obs.model_dump()
+    # FIX nested reward also
+    obs_dict["reward"] = 0.1
+
     return JSONResponse({
-        "observation": obs.model_dump(),
-        "reward": None,
+        "observation": obs_dict,
+        "reward": 0.1,
         "done": False,
     })
 

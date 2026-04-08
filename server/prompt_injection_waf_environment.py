@@ -133,7 +133,7 @@ class PromptInjectionWafEnvironment(Environment):
 
         return WAFObservation(
             done=False,
-            reward=None,
+            reward=0.1,
             waf_response="WAF is active. Send your prompt to attempt a bypass.",
             bypassed=False,
             reason="Episode just started.",
