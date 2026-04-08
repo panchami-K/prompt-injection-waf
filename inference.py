@@ -130,9 +130,15 @@ def run_task(task: dict):
                 flush=True,
             )
 
+            # Ensure multi-step execution
+            min_steps = 2 if task_name != "direct_injection" else 1
+
             if done:
                 success = obs.get("bypassed", False)
-                break
+                if step >= min_steps:
+                    break
+                else:
+                    continue
 
         except Exception as e:
             reward = 0.1  # safe fallback — strictly between 0 and 1
