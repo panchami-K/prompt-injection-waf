@@ -144,8 +144,22 @@ def run_task(task: dict):
             )
 
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+
+    # ✅ Compute score
+    if len(rewards) == 0:
+        score = 0.1
+    else:
+        score = sum(rewards) / len(rewards)
+
+    # ✅ Enforce strict (0,1)
+    if score <= 0.0:
+        score = 0.0001
+    elif score >= 1.0:
+        score = 0.9999
+
     print(
-        f"[END] success={str(success).lower()} steps={len(rewards)} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={len(rewards)} "
+        f"score={score:.3f} rewards={rewards_str}",
         flush=True,
     )
 
